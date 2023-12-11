@@ -5,6 +5,11 @@
 
 #include "sieve.h"
 
+// const std::size_t MAX_MEMORY = 1000000000; //1GB
+// constexpr std::size_t MAX_SEGMENT = MAX_MEMORY / sizeof(std::size_t);
+
+const std::size_t MAX_SEGMENT = 20;
+
 int main(int argc, char** argv) {
     //Currently, basic segmented sieve.
     if(argc != 2) {
@@ -13,18 +18,19 @@ int main(int argc, char** argv) {
     }
     std::size_t maxnum = std::atoll(argv[1]);
     maxnum = maxnum % 2 ? maxnum : maxnum + 1;
-    std::size_t segment = (maxnum/2) % 2 ? maxnum/2 : maxnum/2 - 1;
-
-    Sieve s1(segment), s2(maxnum, segment + 2, s1.getprimevector());
-
-    //s.process_sieve();
-    std::cout << "Found primes: " << s1.getnumprimes() + s2.getnumprimes() << std::endl;
-    for(auto x : s1.getprimevector()) 
-        std::cout << x << std::endl;
-    for(auto x : s2.getprimevector()) 
-        std::cout << x << std::endl;
+    std::size_t iters = (maxnum - 1)/(2*MAX_SEGMENT + 2) + 1; //todo: load splitting
+    std::vector<std::size_t> primes;
     
-    // std::cout << "Should be 78499\n.";
+    for(std::size_t i = 0; i < iters; ++i) {
+        std::size_t start = 3 + 2*i + 2*i*MAX_SEGMENT;
+        std::size_t end = 3 + 2*i + 2*(i+1)*MAX_SEGMENT;
+        end = end > maxnum ? maxnum : end;
+        // std::cout << i << std::endl; TODO add pretty output
+        Sieve s(end, start, primes); //Lifetime until loop end
+        primes.insert(std::end(primes), std::begin(s.getprimevector()), std::end(s.getprimevector()));
+    }
+
+    std::cout << "Found primes: " << primes.size() << std::endl;
 
     return 0;
 }
