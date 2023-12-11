@@ -18,6 +18,8 @@ public:
     /// @brief Get the number of primes we found in the sieve.
     /// @return number of primes in sieve.
     std::size_t getnumprimes();
+    const std::size_t* getprimes();
+    const std::vector<std::size_t>& getprimevector();
 private:
     const std::vector<std::size_t>& prime_list;
     std::vector<std::size_t> found_primes;

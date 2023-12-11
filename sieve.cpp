@@ -8,8 +8,9 @@ inline std::size_t convertnumtoidx(std::size_t num, std::size_t start) {
 }
 
 void mark_primes(std::vector<bool>& sieve_arr, std::size_t prime, std::size_t start, std::size_t maxnum) {
-    if(sieve_arr[convertnumtoidx(prime, start)]) return; //Skip checking if we are given a composite number
+    if(prime >= start && sieve_arr[convertnumtoidx(prime, start)]) return; //Skip checking if we are given a composite number
     for(std::size_t i = 3*prime; i <= maxnum; i += 2*prime) {
+        if(i < start) continue;
         sieve_arr[convertnumtoidx(i, start)] = true;
     }
 }
@@ -49,4 +50,16 @@ std::size_t Sieve::getnumprimes() {
     if(!processed)
         process_sieve();
     return found_primes.size();
+}
+
+const std::size_t* Sieve::getprimes() {
+    if(!processed)
+        process_sieve();
+    return found_primes.data();
+}
+
+const std::vector<std::size_t>& Sieve::getprimevector() {
+    if(!processed)
+        process_sieve();
+    return found_primes;
 }
