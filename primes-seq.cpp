@@ -1,16 +1,21 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
+#include <cstdlib>
 
 #include "sieve.h"
 
 int main(int argc, char** argv) {
-    //Currently, implement basic sieve with optimizations
+    //Currently, basic segmented sieve.
+    if(argc != 2) {
+        std::cerr << "Usage: " << argv[0] << " MAXNUM\n";
+        return -1;
+    }
+    std::size_t maxnum = std::atoll(argv[1]);
+    maxnum = maxnum % 2 ? maxnum : maxnum + 1;
+    std::size_t segment = (maxnum/2) % 2 ? maxnum/2 : maxnum/2 - 1;
 
-    // Sieve s(1000000+3);
-    // Sieve s1(500000+3);
-    // Sieve s2(1000000+3, 500000+3+2, s1.getprimevector());
-    Sieve s1(51), s2(101, 53, s1.getprimevector());
+    Sieve s1(segment), s2(maxnum, segment + 2, s1.getprimevector());
 
     //s.process_sieve();
     std::cout << "Found primes: " << s1.getnumprimes() + s2.getnumprimes() << std::endl;
