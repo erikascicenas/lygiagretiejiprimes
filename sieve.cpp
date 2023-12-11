@@ -39,7 +39,7 @@ void Sieve::process_sieve() {
         mark_primes(sieve_array, i, start, maxnum);
     }
 
-    for(size_t i = start; i < maxnum; i+=2) {
+    for(size_t i = start; i <= maxnum; i+=2) {
         if(!sieve_array[convertnumtoidx(i, start)]) found_primes.push_back(i);
     }
 

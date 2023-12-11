@@ -10,7 +10,7 @@ int main(int argc, char** argv) {
     // Sieve s(1000000+3);
     // Sieve s1(500000+3);
     // Sieve s2(1000000+3, 500000+3+2, s1.getprimevector());
-    Sieve s1(21), s2(51, 23, s1.getprimevector());
+    Sieve s1(51), s2(101, 53, s1.getprimevector());
 
     //s.process_sieve();
     std::cout << "Found primes: " << s1.getnumprimes() + s2.getnumprimes() << std::endl;
