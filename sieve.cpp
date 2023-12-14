@@ -34,7 +34,7 @@ prime_list(prime_list), start(start) {
 
 void Sieve::process_sieve() {
     if(processed) return;
-    auto maxiter = static_cast<std::size_t>((maxnum));
+    auto maxiter = static_cast<std::size_t>(std::sqrt(maxnum));
     for(size_t i = start; i < maxiter; i+=2) {
         mark_primes(sieve_array, i, start, maxnum);
     }
