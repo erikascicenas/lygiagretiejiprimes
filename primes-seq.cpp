@@ -33,6 +33,7 @@ int main(int argc, char** argv) {
 
     cint maxnum = std::atoll(argv[1]);
     maxnum = maxnum % 2 ? maxnum : maxnum + 1;
+    std::cerr << nproc*message_length(maxnum)*sizeof(cint) << std::endl;
     const cint MAX_MEMORY = std::atof(argv[2])*1000000000 - nproc*message_length(maxnum)*sizeof(cint); //1GB
     assert(MAX_MEMORY > 0);
     const cint MAX_SEGMENT = MAX_MEMORY / (2*sizeof(bool)*nproc);
