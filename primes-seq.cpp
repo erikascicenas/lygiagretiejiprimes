@@ -18,7 +18,7 @@ int main(int argc, char** argv) {
     }
     std::size_t maxnum = std::atoll(argv[1]);
     maxnum = maxnum % 2 ? maxnum : maxnum + 1;
-    std::size_t iters = (maxnum - 1)/(2*MAX_SEGMENT + 2) + 1; //todo: load splitting
+    std::size_t iters = std::ceil(static_cast<double>(maxnum - 1)/(2*MAX_SEGMENT + 2)); //todo: load splitting
     std::vector<std::size_t> primes;
     
     for(std::size_t i = 0; i < iters; ++i) {
