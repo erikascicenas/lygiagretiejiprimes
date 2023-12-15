@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <cstdint>
 #include <cassert>
+#include <cstring>
 
 #include <mpi.h>
 
@@ -17,9 +18,9 @@ constexpr double MINIMUM_TIME_UPDATE = 5; //seconds
 
 // const cint SEGMENT = 20;
 
-inline cint message_length(cint maxnum) {
-    return 1.5 * maxnum / std::log(maxnum); //Based on prime counting function
-}
+// inline cint message_length(cint maxnum) {
+//     return 1.5 * maxnum / std::log(maxnum); //Based on prime counting function
+// }
 
 int main(int argc, char** argv) {
     MPI_Init(&argc, &argv);
@@ -51,7 +52,7 @@ int main(int argc, char** argv) {
     std::vector<cint> i_primes;
 
     double t_start = MPI_Wtime();
-
+    cint msg_len;
     if(!pid) {
         std::cout << "Initializing sieving primes\n";
         for(cint i = 0; i < init_iters; ++i) {
@@ -61,14 +62,13 @@ int main(int argc, char** argv) {
             Sieve s(end, start, i_primes); //Lifetime until loop end
             i_primes.insert(std::end(i_primes), std::begin(s.getprimevector()), std::end(s.getprimevector()));
         }
-        i_primes.resize(message_length(3 + 2*init_iters + 2*init_iters*SEGMENT), -i_primes.size());
-    } else {
-        i_primes.resize(message_length(3 + 2*init_iters + 2*init_iters*SEGMENT));
+        msg_len = i_primes.size();
     }
+    MPI_Bcast(&msg_len, 1, MPI_INT64_T, 0, MPI_COMM_WORLD);
+    i_primes.resize(msg_len);
     MPI_Bcast(i_primes.data(), i_primes.size(), MPI_INT64_T, 0, MPI_COMM_WORLD);
-    i_primes.resize(-i_primes[i_primes.size()-1]);
 
-    primes.reserve(message_length(maxnum));
+    // primes.reserve(message_length(maxnum));
 
     if(!pid) std::cout << std::fixed << std::setprecision(2) << MPI_Wtime() << "s:\tStarting main sieving!\n";
 
@@ -98,13 +98,27 @@ int main(int argc, char** argv) {
 
     if(!pid) std::cout << MPI_Wtime() << "s:\tPrime sieving complete; collecting results\n";
     
-    cint msg_length, *recvbuf;
+    cint msg_length, total, *recvbuf, *recvbuf2;
+    MPI_Status status;
 
     if(SAVEPRIMES) {
-        msg_length = message_length(maxnum);
-        primes.resize(msg_length, -1);
-        recvbuf = new cint[nproc*msg_length];
-        MPI_Gather(primes.data(), primes.size(), MPI_INT64_T, recvbuf, msg_length, MPI_INT64_T, 0, MPI_COMM_WORLD);
+        recvbuf = new cint[nproc];
+        msg_length = primes.size();
+        MPI_Gather(&msg_length, 1, MPI_INT64_T, recvbuf, 1, MPI_INT64_T, 0, MPI_COMM_WORLD);
+        if(!pid) {
+            total = 0;
+            for(int i = 0; i < nproc; ++i)
+                total += recvbuf[i];
+            recvbuf2 = new cint[total];
+            std::memcpy(recvbuf2, primes.data(), primes.size()*sizeof(cint));
+            cint *temp_pointer = &recvbuf2[primes.size()];
+            for(int i = 1; i < nproc; ++i) {
+                MPI_Recv(temp_pointer, recvbuf[i], MPI_INT64_T, i, 0, MPI_COMM_WORLD, &status);
+                temp_pointer = &temp_pointer[recvbuf[i]];
+            }
+        } else {
+            MPI_Send(primes.data(), primes.size(), MPI_INT64_T, 0, 0, MPI_COMM_WORLD);
+        }
     } else {
         recvbuf = new cint[nproc];
         MPI_Gather(&prime_num, 1, MPI_INT64_T, recvbuf, 1, MPI_INT64_T, 0, MPI_COMM_WORLD);
@@ -113,15 +127,14 @@ int main(int argc, char** argv) {
     if(!pid) {
         std::cout << "Time: " << MPI_Wtime() - t_start << " seconds\n";
         if(SAVEPRIMES) {
-            i_primes.reserve(nproc*msg_length);
-            for(cint i = 0; i < nproc*msg_length; ++i) {
-                if(recvbuf[i] <= 0) continue;
-                i_primes.push_back(recvbuf[i]);
-            }
+            i_primes.reserve(total);
+            for(cint i = 0; i < total; ++i)
+                i_primes.push_back(recvbuf2[i]);
             i_primes.insert(i_primes.begin(), 2);
             std::cout << "Found primes: " << i_primes.size() << std::endl;
             std::ofstream prime_out("primes.out");
             for(auto p : i_primes) prime_out << p << std::endl;
+            delete[] recvbuf2;
         } else {
             prime_num = i_primes.size() + 1; //+1 for 2
             for(int i = 0; i < nproc; ++i)
