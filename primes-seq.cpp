@@ -30,12 +30,16 @@ int main(int argc, char** argv) {
     int nproc; MPI_Comm_size(MPI_COMM_WORLD, &nproc);
 
     //Currently, basic segmented sieve.
-    if(argc != 4) {
-        std::cerr << "Usage: " << argv[0] << " MAXNUM SEGMENT_LENGTH SAVE_PRIMES \n"; //TODO fix
+    if(argc != 5) {
+        std::cerr << "Usage: " << argv[0] << " MAXNUM SEGMENT_LENGTH SAVE_PRIMES START_NUMBER\n"; //TODO fix
         return -1;
     }
 
     cint maxnum = std::atoll(argv[1]);
+    cint start_num = std::atoll(argv[4]);
+    bool includetwo = start_num == 1 || start_num == 2;
+    start_num = start_num <= 1 ? 3 : start_num;
+    start_num = start_num % 2 ? start_num : start_num + 1;
     maxnum = maxnum % 2 ? maxnum : maxnum + 1;
     const cint SEGMENT = std::atoll(argv[2]);
     const bool SAVEPRIMES = argv[3][0] == 't';
@@ -51,6 +55,7 @@ int main(int argc, char** argv) {
     cint maxnum_init = std::sqrt(maxnum)+1;
     maxnum_init = maxnum_init % 2 ? maxnum_init : maxnum_init + 1;
     cint init_iters = std::floor(static_cast<double>(maxnum_init - 1)/(2*SEGMENT + 2));
+    cint init_itersstart = std::floor(static_cast<double>(start_num - 1)/(2*SEGMENT + 2));
     std::vector<cint> i_primes;
 
     double t_start = MPI_Wtime();
@@ -91,6 +96,7 @@ int main(int argc, char** argv) {
         }
         cint start = 3 + 2*i + 2*i*SEGMENT;
         start = start >= maxnum_init + 2 ? start : maxnum_init + 2;
+        start = start < start_num ? start_num : start;
         cint end = 3 + 2*i + 2*(i+1)*SEGMENT;
         end = end > maxnum ? maxnum : end;
         // std::cout << i << std::endl; TODO add pretty output
@@ -131,18 +137,21 @@ int main(int argc, char** argv) {
 
     if(!pid) {
         std::cout << "Time: " << MPI_Wtime() - t_start << " seconds\n";
+        auto i_primes_end = std::remove_if(i_primes.begin(), i_primes.end(), [start_num](cint i){ return i < start_num; });
+        i_primes.erase(i_primes_end, i_primes.end());
         if(SAVEPRIMES) {
             i_primes.reserve(total);
             for(cint i = 0; i < total; ++i)
                 i_primes.push_back(recvbuf2[i]);
-            i_primes.insert(i_primes.begin(), 2);
+            if(includetwo)
+                i_primes.push_back(2);
             std::cout << "Found primes: " << i_primes.size() << std::endl;
             std::sort(i_primes.begin(), i_primes.end());
             std::ofstream prime_out("primes.out");
             for(auto p : i_primes) prime_out << p << std::endl;
             delete[] recvbuf2;
         } else {
-            prime_num = i_primes.size() + 1; //+1 for 2
+            prime_num = i_primes.size() + (includetwo ? 1 : 0); //+1 for 2
             for(int i = 0; i < nproc; ++i)
                 prime_num += recvbuf[i];
             std::cout << "Found primes: " << prime_num << std::endl;
