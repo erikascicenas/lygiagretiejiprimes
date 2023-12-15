@@ -9,8 +9,11 @@ inline std::int64_t convertnumtoidx(std::int64_t num, std::int64_t start) {
 
 void mark_primes(std::vector<bool>& sieve_arr, std::int64_t prime, std::int64_t start, std::int64_t maxnum) {
     if(prime >= start && sieve_arr[convertnumtoidx(prime, start)]) return; //Skip checking if we are given a composite number
-    for(std::int64_t i = 3*prime; i <= maxnum; i += 2*prime) {
-        if(i < start) continue;
+    std::int64_t coeff = static_cast<int64_t>(std::ceil(static_cast<double>(start) / prime));
+    coeff = coeff % 2 ? coeff : coeff + 1;
+    std::int64_t i = (coeff > 3 ? coeff : 3)*prime;
+    for(; i <= maxnum; i += 2*prime) {
+        // if(i < start) continue;
         sieve_arr[convertnumtoidx(i, start)] = true;
     }
 }
