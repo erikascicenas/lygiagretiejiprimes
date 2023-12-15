@@ -1,0 +1,10 @@
+ARGUMENTS:
+MAXNUM: 1000000001
+SEGMENT LENGTH: 100000000
+SAVE? true
+START_NUM: 3
+Initializing sieving primes
+0.00s:	Starting main sieving!
+2.15s:	Prime sieving complete; collecting results
+Time: 2.30 seconds
+Found primes: 50847534
