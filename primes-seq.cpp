@@ -137,8 +137,10 @@ int main(int argc, char** argv) {
 
     if(!pid) {
         std::cout << "Time: " << MPI_Wtime() - t_start << " seconds\n";
-        auto i_primes_end = std::remove_if(i_primes.begin(), i_primes.end(), [start_num](cint i){ return i < start_num; });
-        i_primes.erase(i_primes_end, i_primes.end());
+        if(!includetwo) {
+            auto i_primes_end = std::remove_if(i_primes.begin(), i_primes.end(), [start_num](cint i){ return i < start_num; });
+            i_primes.erase(i_primes_end, i_primes.end());
+        }
         if(SAVEPRIMES) {
             i_primes.reserve(total);
             for(cint i = 0; i < total; ++i)
