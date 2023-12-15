@@ -47,7 +47,7 @@ int main(int argc, char** argv) {
     if(!pid)
         std::cout << "ARGUMENTS:\n" << "MAXNUM: " << maxnum << "\nSEGMENT LENGTH: " << SEGMENT << 
             "\nSAVE? " << (SAVEPRIMES ? "true" : "false") <<
-            "\nSTART_NUM" << start_num << std::endl;
+            "\nSTART_NUM: " << start_num << std::endl;
 
     cint iters = std::ceil(static_cast<double>(maxnum - 1)/(2*SEGMENT + 2)); //todo: load splitting
     std::vector<cint> primes;
