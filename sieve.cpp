@@ -22,7 +22,7 @@ prime_list(prime_list), start(start) {
 
 
     found_primes = std::vector<std::int64_t>();
-    sieve_array = std::vector<bool>((end-start)/2);
+    sieve_array = std::vector<bool>((end-start)/2 + 1);
     maxnum = end;
     if(!prime_list.empty()) {
         for(auto prime : prime_list)

@@ -83,8 +83,7 @@ int main(int argc, char** argv) {
 
     double last_update = MPI_Wtime();
     cint last_i = pid;
-
-    for(cint i = init_iters + pid; i < iters; i += nproc) {
+    for(cint i = (init_iters > init_itersstart ? init_iters : init_itersstart) + pid; i < iters; i += nproc) {
         if(MPI_Wtime() - last_update >= MINIMUM_TIME_UPDATE) {
             double time_intv = MPI_Wtime() - last_update;
             last_update += time_intv;
