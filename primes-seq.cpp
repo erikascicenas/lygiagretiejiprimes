@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <cassert>
 #include <cstring>
+#include <algorithm>
 
 #include <mpi.h>
 
@@ -48,20 +49,23 @@ int main(int argc, char** argv) {
     cint prime_num = 0;
     //First, find primes in sqrt(N) interval for other processes to use
     cint maxnum_init = std::sqrt(maxnum)+1;
-    cint init_iters = std::ceil(static_cast<double>(maxnum_init - 1)/(2*SEGMENT + 2));
+    maxnum_init = maxnum_init % 2 ? maxnum_init : maxnum_init + 1;
+    cint init_iters = std::floor(static_cast<double>(maxnum_init - 1)/(2*SEGMENT + 2));
     std::vector<cint> i_primes;
 
     double t_start = MPI_Wtime();
     cint msg_len;
     if(!pid) {
         std::cout << "Initializing sieving primes\n";
-        for(cint i = 0; i < init_iters; ++i) {
-            cint start = 3 + 2*i + 2*i*SEGMENT;
-            cint end = 3 + 2*i + 2*(i+1)*SEGMENT;
-            end = end > maxnum ? maxnum : end;
-            Sieve s(end, start, i_primes); //Lifetime until loop end
-            i_primes.insert(std::end(i_primes), std::begin(s.getprimevector()), std::end(s.getprimevector()));
-        }
+        // for(cint i = 0; i < init_iters; ++i) {
+        //     cint start = 3 + 2*i + 2*i*SEGMENT;
+        //     cint end = 3 + 2*i + 2*(i+1)*SEGMENT;
+        //     end = end > maxnum ? maxnum : end;
+        //     Sieve s(end, start, i_primes); //Lifetime until loop end
+        //     i_primes.insert(std::end(i_primes), std::begin(s.getprimevector()), std::end(s.getprimevector()));
+        // }
+        Sieve s(maxnum_init, 3);
+        i_primes.insert(std::end(i_primes), std::begin(s.getprimevector()), std::end(s.getprimevector()));
         msg_len = i_primes.size();
     }
     MPI_Bcast(&msg_len, 1, MPI_INT64_T, 0, MPI_COMM_WORLD);
@@ -80,12 +84,13 @@ int main(int argc, char** argv) {
             double time_intv = MPI_Wtime() - last_update;
             last_update += time_intv;
             std::cout << std::fixed;
-            std::cout << std::setprecision(1) << last_update << "s: [" << pid << "] " << 100.0*(i-pid)/(iters - init_iters) << "%\t";
+            std::cout << std::setprecision(1) << last_update << "s: [" << pid << "] " << 100.0*(i-pid)/(iters-init_iters) << "%\t";
             std::cout << "Current number of primes found by process: " << (SAVEPRIMES ? primes.size() : prime_num);
             std::cout << "\tETA: " << time_intv/(i - last_i)*(iters - init_iters - i + pid) << 's' << std::endl;
             last_i = i;
         }
         cint start = 3 + 2*i + 2*i*SEGMENT;
+        start = start >= maxnum_init + 2 ? start : maxnum_init + 2;
         cint end = 3 + 2*i + 2*(i+1)*SEGMENT;
         end = end > maxnum ? maxnum : end;
         // std::cout << i << std::endl; TODO add pretty output
@@ -132,6 +137,7 @@ int main(int argc, char** argv) {
                 i_primes.push_back(recvbuf2[i]);
             i_primes.insert(i_primes.begin(), 2);
             std::cout << "Found primes: " << i_primes.size() << std::endl;
+            std::sort(i_primes.begin(), i_primes.end());
             std::ofstream prime_out("primes.out");
             for(auto p : i_primes) prime_out << p << std::endl;
             delete[] recvbuf2;
