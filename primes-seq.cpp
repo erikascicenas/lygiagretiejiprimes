@@ -17,12 +17,6 @@ using cint = std::int64_t;
 
 constexpr double MINIMUM_TIME_UPDATE = 5; //seconds
 
-// const cint SEGMENT = 20;
-
-// inline cint message_length(cint maxnum) {
-//     return 1.5 * maxnum / std::log(maxnum); //Based on prime counting function
-// }
-
 int main(int argc, char** argv) {
     MPI_Init(&argc, &argv);
 
@@ -31,7 +25,12 @@ int main(int argc, char** argv) {
 
     //Currently, basic segmented sieve.
     if(argc != 5) {
-        std::cerr << "Usage: " << argv[0] << " MAXNUM SEGMENT_LENGTH SAVE_PRIMES START_NUMBER\n"; //TODO fix
+        std::cerr << "Usage: " << argv[0] << " MAXNUM SEGMENT_LENGTH SAVE_PRIMES START_NUMBER\n";
+        std::cerr << "MAXNUM -- until what number should the search be executed; +1 if even.\n";
+        std::cerr << "SEGMENT_LENGTH -- length of segment used by each process; by that you can judge maximum memory usage\n";
+        std::cerr << "SAVE_PRIMES -- if 't' (exactly), it saves primes to file. Increases memory usage significantly for large N\n";
+        std::cerr << "START_NUMBER -- number to start searching from; by default set this to 1 (to include 2)";
+        std::cerr << std::endl;
         return -1;
     }
 
@@ -49,7 +48,7 @@ int main(int argc, char** argv) {
             "\nSAVE? " << (SAVEPRIMES ? "true" : "false") <<
             "\nSTART_NUM: " << start_num << std::endl;
 
-    cint iters = std::ceil(static_cast<double>(maxnum - 1)/(2*SEGMENT + 2)); //todo: load splitting
+    cint iters = std::ceil(static_cast<double>(maxnum - 1)/(2*SEGMENT + 2));
     std::vector<cint> primes;
     cint prime_num = 0;
     //First, find primes in sqrt(N) interval for other processes to use
@@ -63,22 +62,15 @@ int main(int argc, char** argv) {
     cint msg_len;
     if(!pid) {
         std::cout << "Initializing sieving primes\n";
-        // for(cint i = 0; i < init_iters; ++i) {
-        //     cint start = 3 + 2*i + 2*i*SEGMENT;
-        //     cint end = 3 + 2*i + 2*(i+1)*SEGMENT;
-        //     end = end > maxnum ? maxnum : end;
-        //     Sieve s(end, start, i_primes); //Lifetime until loop end
-        //     i_primes.insert(std::end(i_primes), std::begin(s.getprimevector()), std::end(s.getprimevector()));
-        // }
         Sieve s(maxnum_init, 3);
         i_primes.insert(std::end(i_primes), std::begin(s.getprimevector()), std::end(s.getprimevector()));
         msg_len = i_primes.size();
     }
+    //Send how many primes to receive.
     MPI_Bcast(&msg_len, 1, MPI_INT64_T, 0, MPI_COMM_WORLD);
     i_primes.resize(msg_len);
+    //Send primes
     MPI_Bcast(i_primes.data(), i_primes.size(), MPI_INT64_T, 0, MPI_COMM_WORLD);
-
-    // primes.reserve(message_length(maxnum));
 
     if(!pid) std::cout << std::fixed << std::setprecision(2) << MPI_Wtime() << "s:\tStarting main sieving!\n";
 

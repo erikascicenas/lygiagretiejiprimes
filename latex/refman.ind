@@ -1,0 +1,18 @@
+\begin{theindex}
+
+  \item {getnumprimes}
+    \subitem {Sieve}, \hyperpage{6}
+  \item {getprimes}
+    \subitem {Sieve}, \hyperpage{6}
+  \item {getprimevector}
+    \subitem {Sieve}, \hyperpage{6}
+
+  \indexspace
+
+  \item {Sieve}, \hyperpage{5}
+    \subitem {getnumprimes}, \hyperpage{6}
+    \subitem {getprimes}, \hyperpage{6}
+    \subitem {getprimevector}, \hyperpage{6}
+    \subitem {Sieve}, \hyperpage{5}
+
+\end{theindex}

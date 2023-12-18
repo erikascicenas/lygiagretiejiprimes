@@ -19,7 +19,11 @@ public:
     /// @brief Get the number of primes we found in the sieve.
     /// @return number of primes in sieve.
     std::int64_t getnumprimes();
+    /// @brief Get primes.
+    /// @return Primes.
     const std::int64_t* getprimes();
+    /// @brief get primes, but a vector.
+    /// @return the same primes, but a vector.
     const std::vector<std::int64_t>& getprimevector();
 private:
     const std::vector<std::int64_t>& prime_list;
